@@ -14,12 +14,19 @@
 # limitations under the License.
 #
 import time
-
+import random
 
 import paho.mqtt.client as paho
 from paho import mqtt
 
+import os
+from dotenv import load_dotenv
 
+load_dotenv("credentials.env")
+BROKER_ADDRESS = os.getenv("BROKER_ADDRESS")
+USER_NAME = os.getenv("USER_NAME")
+PASSWORD = os.getenv("PASSWORD")
+BROKER_PORT = os.getenv("8883")
 
 
 # setting callbacks for different events to see if it works, print the message etc.
@@ -89,9 +96,9 @@ client.on_connect = on_connect
 # enable TLS for secure connection
 client.tls_set(tls_version=mqtt.client.ssl.PROTOCOL_TLS)
 # set username and password
-client.username_pw_set("{YOUR USERNAME}", "{YOUR PASSWORD}")
+client.username_pw_set(USER_NAME, PASSWORD)
 # connect to HiveMQ Cloud on port 8883 (default for MQTT)
-client.connect("{YOUR URL}", 8883)
+client.connect(BROKER_ADDRESS, 8883)
 
 
 # setting callbacks, use separate functions like above for better visibility
@@ -103,11 +110,10 @@ client.on_publish = on_publish
 # subscribe to all topics of encyclopedia by using the wildcard "#"
 client.subscribe("encyclopedia/#", qos=1)
 
-
+client.loop_forever()
 # a single publish, this can also be done in loops, etc.
-client.publish("encyclopedia/temperature", payload="hot", qos=1)
+#client.publish("encyclopedia/temperature", payload="hot", qos=1)
 
 
 # loop_forever for simplicity, here you need to stop the loop manually
 # you can also use loop_start and loop_stop
-client.loop_forever()
