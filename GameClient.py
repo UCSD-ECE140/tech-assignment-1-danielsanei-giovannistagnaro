@@ -105,6 +105,7 @@ move_to_Moveset = {
 
 # Dispatched Function: handles player movement commands
 def player_move(client, topic_list, msg_payload):
+    print("Moving Player")
     lobby_name = topic_list[1]
     player_name = topic_list[2]
     if lobby_name in client.team_dict.keys():

@@ -45,6 +45,10 @@ def on_subscribe(client, userdata, mid, granted_qos, properties=None):
     print("Subscribed: " + str(mid) + " " + str(granted_qos))
 
 
+# stores the possible moves a user can make
+moveset_list = ["UP", "DOWN", "LEFT", "RIGHT"]
+game_over = 0
+
 # print message, useful for checking if it was successful
 def on_message(client, userdata, msg):
     """
@@ -54,11 +58,31 @@ def on_message(client, userdata, msg):
         :param msg: the message with topic and payload
     """
 
-    # PUT MOST LOGIC IN HERE
-    print("message: " + msg.topic + " " + str(msg.qos) + " " + str(msg.payload))
+    if "Game Over" in str(msg.payload):
+        global game_over  # need to use this line to edit global variable; not needed to read
+        game_over += 1
+        print("message: " + msg.topic + " " + str(msg.qos) + " " + str(msg.payload))
+
+    if game_over == 0:
+        print("message: " + msg.topic + " " + str(msg.qos) + " " + str(msg.payload))
+
+    if "game_state" in msg.topic:
+        usr_move = ""
+
+        while usr_move not in moveset_list:
+            usr_move = input("Make a move... ")
+            if usr_move == "STOP":
+                client.publish(f"games/{lobby_name}/start", usr_move)
+                break
+
+        time.sleep(1) # Wait a second to resolve game start
+        client.publish(f"games/{lobby_name}/{player_name}/move", usr_move)
+        time.sleep(1) # Wait a second to resolve game start
 
 
 if __name__ == '__main__':
+    game_over = 0
+
     load_dotenv(dotenv_path='./credentials.env')
     
     broker_address = os.environ.get('BROKER_ADDRESS')
@@ -81,15 +105,15 @@ if __name__ == '__main__':
     client.on_publish = on_publish # Can comment out to not print when publishing to topics
 
     lobby_name = "TestLobby"
-    player_2 = "Player2"
+    player_name = "Player2"
 
     client.subscribe(f"games/{lobby_name}/lobby")
-    client.subscribe(f'games/{lobby_name}/{player_2}/game_state')
+    client.subscribe(f'games/{lobby_name}/{player_name}/game_state')
     client.subscribe(f'games/{lobby_name}/scores')
     
     client.publish("new_game", json.dumps({'lobby_name':lobby_name,
                                             'team_name':'BTeam',
-                                            'player_name' : player_2}))
+                                            'player_name' : player_name}))
 
     time.sleep(1) # Wait a second to resolve game start
     #client.publish(f"games/{lobby_name}/start", "START")
