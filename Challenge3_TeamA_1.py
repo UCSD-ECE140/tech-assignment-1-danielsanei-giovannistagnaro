@@ -80,6 +80,7 @@ def on_message(client, userdata, msg):
 
     if "game_state" in msg.topic:
         time.sleep(1) # Wait a second to resolve game start
+        print("DEBUG:: message: " + msg.topic + " " + str(msg.qos) + " " + str(msg.payload))
 
         # Load game state
         game_state = json.loads(msg.payload)
@@ -109,7 +110,10 @@ def on_message(client, userdata, msg):
                 print("No path found, moving randomly.")
                 bot_move = random.choice(moveset_list)
                 client.publish(f"games/{lobby_name}/{player_name_1}/move", bot_move)
-
+        else:
+            print("No path found, moving randomly.")
+            bot_move = random.choice(moveset_list)
+            client.publish(f"games/{lobby_name}/{player_name_1}/move", bot_move)
         time.sleep(1) # Wait a second to resolve game start
 
 
