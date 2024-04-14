@@ -67,9 +67,6 @@ def a_star_search(start, goal, walls):
                 frontier.put(next, priority)
                 came_from[next] = current
 
-        if current != goal:
-            return None, None
-
     # Return
     return came_from, cost_so_far
 

@@ -1,6 +1,7 @@
 import os
 import json
 from dotenv import load_dotenv
+from Challenge3_alg import manhattan_distance, a_star_search, reconstruct_path
 
 import paho.mqtt.client as paho
 from paho import mqtt
@@ -49,6 +50,18 @@ def on_subscribe(client, userdata, mid, granted_qos, properties=None):
 moveset_list = ["UP", "DOWN", "LEFT", "RIGHT"]
 game_over = 0
 
+# Determine next move given A* results
+def get_move_cmd(current, next):
+    dx, dy = next[0] - current[0], next[1] - current[1]
+    if dx == 1:
+        return "DOWN"
+    elif dx == -1:
+        return "UP"
+    elif dy == 1:
+        return "RIGHT"
+    elif dy == -1:
+        return "LEFT"
+
 # print message, useful for checking if it was successful
 def on_message(client, userdata, msg):
     """
@@ -68,9 +81,34 @@ def on_message(client, userdata, msg):
     if "game_state" in msg.topic:
         time.sleep(1) # Wait a second to resolve game start
 
-        bot_move = random.choice(moveset_list)
-        print("Moving player: ", player_name_1, " with move ", bot_move)
-        client.publish(f"games/{lobby_name}/{player_name_1}/move", bot_move)
+        # Load game state
+        game_state = json.loads(msg.payload)
+
+        # Get game state data
+        current_position = tuple(game_state['currentPosition'])
+        walls = set(tuple(wall) for wall in game_state['walls'])
+        coins = game_state['coin1'] + game_state['coin2'] + game_state['coin3']
+        coins = [tuple(coin) for coin in coins]
+
+        # Select nearest coin as target
+        if coins:
+            target_coin = min(coins, key=lambda x: manhattan_distance(current_position, x))
+
+            # Use A* to get nearest path
+            came_from, cost_so_far = a_star_search(current_position, target_coin, walls)
+            path = reconstruct_path(came_from, current_position, target_coin)
+
+            # Determine next move
+            if path:
+                next_move = path[0]
+                move_cmd = get_move_cmd(current_position, next_move)
+                print("Moving player: ", player_name_1, " towards coin ", target_coin, " with move ", move_cmd)
+                client.publish(f"games/{lobby_name}/{player_name_1}/move", move_cmd)
+            # Randomize move (as backup)
+            else:
+                print("No path found, moving randomly.")
+                bot_move = random.choice(moveset_list)
+                client.publish(f"games/{lobby_name}/{player_name_1}/move", bot_move)
 
         time.sleep(1) # Wait a second to resolve game start
 
