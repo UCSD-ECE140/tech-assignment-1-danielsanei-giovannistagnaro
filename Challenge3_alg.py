@@ -15,7 +15,7 @@ class PriorityQueue:
         return heapq.heappop(self.elements)[1]
     
 def manhattan_distance(a, b):
-        return abs(b[0] - a[0]) + abs(b[1] - b[1])
+        return abs(b[0] - a[0]) + abs(b[1] - a[1])
     
 def get_neighbors(node, walls):
         
@@ -66,6 +66,9 @@ def a_star_search(start, goal, walls):
                 priority = new_cost + manhattan_distance(goal, next)
                 frontier.put(next, priority)
                 came_from[next] = current
+
+        if current != goal:
+            return None, None
 
     # Return
     return came_from, cost_so_far
